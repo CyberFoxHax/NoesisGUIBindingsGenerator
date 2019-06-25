@@ -10,9 +10,10 @@ using System.Xml;
 public class NoesisCsBindingsGenerator {
     public class NoesisGeneratedAttribute :Attribute { }
     public static void GenerateCsFile(string filename) {
-        var generator = new NoesisCsBindingsGenerator();
-        generator.XamlAsset = AssetDatabase.LoadAssetAtPath<NoesisXaml>(filename.Replace(".xaml", ".asset"));
-        generator.XamlText = File.ReadAllText(filename);
+        var generator = new NoesisCsBindingsGenerator {
+			XamlAsset = AssetDatabase.LoadAssetAtPath<NoesisXaml>(filename.Replace(".xaml", ".asset")),
+			XamlText = File.ReadAllText(filename)
+		};
         generator.SaveFile();
     }
 
@@ -49,6 +50,10 @@ public class NoesisCsBindingsGenerator {
     private string GetCsText() {
         var namespaceString = GetNamespaceString();
         var className = GetClassNameString();
+        var hasCodeBehind = className != null && namespaceString != null;
+		if (hasCodeBehind == false)
+			return null;
+
         var inheritsClassName = GetBaseClassName();
         var includedNamespaces = GetXamlIncludedNamespaces().ToArray();
         var events = GetEvents().ToArray();
@@ -61,10 +66,6 @@ public class NoesisCsBindingsGenerator {
 
         var hasNamedElements = elements.Any();
         var hasEvents = events.Any();
-        var hasCodeBehind = className != null && namespaceString != null;
-
-        if (hasNamedElements == false && hasEvents == false && hasCodeBehind == false)
-            return null;
 
         var stringBuilder = new System.Text.StringBuilder();
         stringBuilder.AppendLine("/* This file has been generated automatically. All user changes will be overwritten if the XAML is changed. */");
@@ -79,7 +80,7 @@ public class NoesisCsBindingsGenerator {
                 stringBuilder.AppendLine();
             foreach (var item in elements)
                 stringBuilder
-                    .Append("\t\tpublic ")
+                    .Append("\t\tinternal ")
                     .Append(item.Type)
                     .Append(" ")
                     .Append(item.Name)
